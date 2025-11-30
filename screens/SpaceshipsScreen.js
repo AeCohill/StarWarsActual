@@ -4,17 +4,19 @@ import {
   Text,
   TextInput,
   Button,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Modal,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 export default function SpaceshipsScreen() {
   const [ships, setShips] = useState([]);
 
-  // --- Search state ---
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [swipeModalVisible, setSwipeModalVisible] = useState(false);
+  const [selectedShip, setSelectedShip] = useState("");
 
   useEffect(() => {
     fetch("https://swapi.dev/api/starships/")
@@ -23,22 +25,27 @@ export default function SpaceshipsScreen() {
       .catch(err => console.log(err));
   }, []);
 
+  // swipe action
+  const renderRightActions = (shipName) => (
+    <View style={styles.swipeAction}>
+      <Text style={styles.swipeText}>Swipe Release</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
 
-      {/* --- Search Box --- */}
+      {/* Search Box */}
       <TextInput
         style={styles.input}
         placeholder="Enter search text..."
         value={searchText}
         onChangeText={setSearchText}
       />
-      <Button
-        title="Submit"
-        onPress={() => setModalVisible(true)}
-      />
 
-      {/* --- Modal Dialog --- */}
+      <Button title="Submit" onPress={() => setModalVisible(true)} />
+
+      {/* Search Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
@@ -50,14 +57,35 @@ export default function SpaceshipsScreen() {
         </View>
       </Modal>
 
-      {/* --- Starships List --- */}
-      <FlatList
-        data={ships}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => (
-          <Text style={styles.item}>{item.name}</Text>
-        )}
-      />
+      {/* Swipe Modal */}
+      <Modal visible={swipeModalVisible} transparent animationType="fade">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Starship:</Text>
+            <Text style={styles.modalValue}>{selectedShip}</Text>
+
+            <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ScrollView List */}
+      <ScrollView style={{ marginTop: 20 }}>
+        {ships.map((item) => (
+          <Swipeable
+            key={item.name}
+            renderRightActions={() => renderRightActions(item.name)}
+            onSwipeableOpen={() => {
+              setSelectedShip(item.name);
+              setSwipeModalVisible(true);
+            }}
+          >
+            <View style={styles.itemBox}>
+              <Text style={styles.item}>{item.name}</Text>
+            </View>
+          </Swipeable>
+        ))}
+      </ScrollView>
 
     </View>
   );
@@ -75,9 +103,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
+  itemBox: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+
   item: {
     fontSize: 20,
-    marginVertical: 10,
+  },
+
+  swipeAction: {
+    backgroundColor: "#eee",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 100,
+  },
+
+  swipeText: {
+    fontSize: 16,
+    color: "black",
   },
 
   modalBackground: {
@@ -95,10 +143,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  modalText: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
+  modalText: { fontSize: 16, marginBottom: 10 },
 
   modalValue: {
     fontSize: 20,
