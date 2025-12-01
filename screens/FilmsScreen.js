@@ -4,66 +4,58 @@ import {
   Text,
   TextInput,
   Button,
-  ScrollView,
+  FlatList,
   StyleSheet,
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
+import LazyImage from "./LazyImage";
 
 export default function FilmsScreen() {
   const [films, setFilms] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Search modal
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Swipe modal
-  const [swipeModalVisible, setSwipeModalVisible] = useState(false);
-  const [selectedFilm, setSelectedFilm] = useState("");
-
   useEffect(() => {
     fetch("https://swapi.dev/api/films/")
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         setFilms(data.results || []);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error(err);
         setLoading(false);
       });
   }, []);
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" />
       </View>
     );
-  }
-
-  const renderRightActions = () => (
-    <View style={styles.swipeAction}>
-      <Text style={styles.swipeText}>Release</Text>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
 
-      {/* Search Box */}
+      {/* Lazy Loaded Image */}
+      <LazyImage
+        style={styles.banner}
+        resizeMode="contain"
+        source={require("../assets/Star-Wars-Emblema.png")}
+      />
+
       <TextInput
         style={styles.input}
         placeholder="Enter search text..."
         value={searchText}
         onChangeText={setSearchText}
       />
-
       <Button title="Submit" onPress={() => setModalVisible(true)} />
 
-      {/* Search Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
@@ -75,45 +67,25 @@ export default function FilmsScreen() {
         </View>
       </Modal>
 
-      {/* Swipe Modal */}
-      <Modal visible={swipeModalVisible} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalText}>Film selected:</Text>
-            <Text style={styles.modalValue}>{selectedFilm}</Text>
-
-            <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
+      <FlatList
+        data={films}
+        keyExtractor={(item) => item.title}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text>Episode: {item.episode_id}</Text>
+            <Text>Director: {item.director}</Text>
+            <Text>Release: {item.release_date}</Text>
           </View>
-        </View>
-      </Modal>
-
-      {/* Scrollable Film List */}
-      <ScrollView style={{ marginTop: 20 }}>
-        {films.map((item) => (
-          <Swipeable
-            key={item.title}
-            renderRightActions={renderRightActions}
-            onSwipeableOpen={() => {
-              setSelectedFilm(item.title);
-              setSwipeModalVisible(true);
-            }}
-          >
-            <View style={styles.item}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text>Episode: {item.episode_id}</Text>
-              <Text>Director: {item.director}</Text>
-              <Text>Release: {item.release_date}</Text>
-            </View>
-          </Swipeable>
-        ))}
-      </ScrollView>
-
+        )}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
+  banner: { width: "100%", height: 150, marginBottom: 10 },
 
   input: {
     backgroundColor: "#fff",
@@ -126,26 +98,12 @@ const styles = StyleSheet.create({
 
   item: {
     marginBottom: 15,
-    padding: 12,
+    padding: 10,
     backgroundColor: "#eee",
     borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#ccc",
   },
 
   title: { fontSize: 18, fontWeight: "bold" },
-
-  swipeAction: {
-    backgroundColor: "#ddd",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 100,
-  },
-
-  swipeText: {
-    fontSize: 16,
-    color: "black",
-  },
 
   modalBackground: {
     flex: 1,
@@ -162,14 +120,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  modalText: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-
-  modalValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  modalText: { fontSize: 16, marginBottom: 10 },
+  modalValue: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
 });

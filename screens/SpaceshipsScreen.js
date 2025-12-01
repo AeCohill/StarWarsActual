@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+import LazyImage from "./LazyImage";
+
 export default function SpaceshipsScreen() {
   const [ships, setShips] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -18,7 +20,6 @@ export default function SpaceshipsScreen() {
   const [swipeModalVisible, setSwipeModalVisible] = useState(false);
   const [selectedShip, setSelectedShip] = useState("");
 
-  // Animated values for each ship
   const animatedValues = useRef({}).current;
 
   useEffect(() => {
@@ -28,12 +29,10 @@ export default function SpaceshipsScreen() {
         const results = data.results || [];
         setShips(results);
 
-        // Create Animated values for each ship
         results.forEach((ship) => {
           animatedValues[ship.name] = new Animated.Value(0);
         });
 
-        // Animate all items sliding & fading in
         Animated.stagger(
           50,
           results.map((ship) =>
@@ -48,13 +47,11 @@ export default function SpaceshipsScreen() {
       .catch((err) => console.log(err));
   }, []);
 
-  // Tap → show ship modal
   const handleTap = (shipName) => {
     setSelectedShip(shipName);
     setSwipeModalVisible(true);
   };
 
-  // Long press → remove item
   const removeShip = (name) => {
     Animated.timing(animatedValues[name], {
       toValue: 0,
@@ -67,7 +64,8 @@ export default function SpaceshipsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Search Input */}
+      
+      {/* Search Box */}
       <TextInput
         style={styles.input}
         placeholder="Enter search text..."
@@ -93,7 +91,10 @@ export default function SpaceshipsScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalText}>Starship:</Text>
             <Text style={styles.modalValue}>{selectedShip}</Text>
-            <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
+            <Button
+              title="Close"
+              onPress={() => setSwipeModalVisible(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -107,7 +108,7 @@ export default function SpaceshipsScreen() {
               {
                 translateX: animatedValues[item.name].interpolate({
                   inputRange: [0, 1],
-                  outputRange: [-50, 0], // slide in from left
+                  outputRange: [-50, 0],
                 }),
               },
             ],
@@ -120,6 +121,17 @@ export default function SpaceshipsScreen() {
                 onLongPress={() => removeShip(item.name)}
               >
                 <Text style={styles.item}>{item.name}</Text>
+
+                {/* ⭐ NEW — LazyImage under ship name */}
+                <LazyImage
+                  source={{
+                    uri:
+                      "https://starwars-visualguide.com/assets/img/starships/" +
+                      (item.url.split("/")[5] || "1") +
+                      ".jpg",
+                  }}
+                  style={{ width: "100%", height: 200, marginTop: 10 }}
+                />
               </TouchableOpacity>
             </Animated.View>
           );
@@ -128,26 +140,36 @@ export default function SpaceshipsScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
   input: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    borderWidth: 1,
+    height: 40,
     borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
     marginBottom: 10,
+    backgroundColor: "#fff",
   },
   itemBox: {
     backgroundColor: "#fff",
     padding: 15,
-    borderRadius: 5,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  item: { fontSize: 20 },
+  item: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
   modalBackground: {
     flex: 1,
     justifyContent: "center",
@@ -156,11 +178,18 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     width: "80%",
-    backgroundColor: "#fff",
     padding: 20,
+    backgroundColor: "#fff",
     borderRadius: 10,
     alignItems: "center",
   },
-  modalText: { fontSize: 16, marginBottom: 10 },
-  modalValue: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  modalValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
 });
