@@ -10,7 +10,7 @@ import {
   Animated,
   TouchableOpacity,
 } from "react-native";
-
+import NetInfo from "@react-native-community/netinfo";
 import LazyImage from "./LazyImage";
 
 export default function SpaceshipsScreen() {
@@ -19,8 +19,15 @@ export default function SpaceshipsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [swipeModalVisible, setSwipeModalVisible] = useState(false);
   const [selectedShip, setSelectedShip] = useState("");
-
+  const [isConnected, setIsConnected] = useState(true);
   const animatedValues = useRef({}).current;
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) =>
+      setIsConnected(state.isConnected)
+    );
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetch("https://swapi.dev/api/starships/")
@@ -44,8 +51,21 @@ export default function SpaceshipsScreen() {
           )
         ).start();
       })
-      .catch((err) => console.log(err));
+      .catch(() => {});
   }, []);
+
+  if (!isConnected) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ fontSize: 20, color: "red", textAlign: "center" }}>
+          ⚠ No network connection detected.
+        </Text>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          Please reconnect to the internet to load Star Wars data.
+        </Text>
+      </View>
+    );
+  }
 
   const handleTap = (shipName) => {
     setSelectedShip(shipName);
@@ -64,8 +84,6 @@ export default function SpaceshipsScreen() {
 
   return (
     <View style={styles.container}>
-      
-      {/* Search Box */}
       <TextInput
         style={styles.input}
         placeholder="Enter search text..."
@@ -74,32 +92,26 @@ export default function SpaceshipsScreen() {
       />
       <Button title="Submit" onPress={() => setModalVisible(true)} />
 
-      {/* Search Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalText}>You typed:</Text>
+            <Text>You typed:</Text>
             <Text style={styles.modalValue}>{searchText}</Text>
             <Button title="Close" onPress={() => setModalVisible(false)} />
           </View>
         </View>
       </Modal>
 
-      {/* Ship Tap Modal */}
       <Modal visible={swipeModalVisible} transparent animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalText}>Starship:</Text>
+            <Text>Ship:</Text>
             <Text style={styles.modalValue}>{selectedShip}</Text>
-            <Button
-              title="Close"
-              onPress={() => setSwipeModalVisible(false)}
-            />
+            <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
           </View>
         </View>
       </Modal>
 
-      {/* List */}
       <ScrollView style={{ marginTop: 20 }}>
         {ships.map((item) => {
           const animStyle = {
@@ -122,7 +134,6 @@ export default function SpaceshipsScreen() {
               >
                 <Text style={styles.item}>{item.name}</Text>
 
-                {/* ⭐ NEW — LazyImage under ship name */}
                 <LazyImage
                   source={{
                     uri:
@@ -140,6 +151,7 @@ export default function SpaceshipsScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -166,10 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  item: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  item: { fontSize: 18, fontWeight: "bold" },
   modalBackground: {
     flex: 1,
     justifyContent: "center",
@@ -183,13 +192,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
   modalValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginVertical: 15,
   },
 });

@@ -9,27 +9,45 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
 import LazyImage from "./LazyImage";
 
 export default function FilmsScreen() {
   const [films, setFilms] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) =>
+      setIsConnected(state.isConnected)
+    );
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetch("https://swapi.dev/api/films/")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setFilms(data.results || []);
         setLoading(false);
       })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
+
+  if (!isConnected) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ fontSize: 20, color: "red", textAlign: "center" }}>
+          ⚠ No network connection detected.
+        </Text>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          Please reconnect to the internet to load Star Wars data.
+        </Text>
+      </View>
+    );
+  }
 
   if (loading)
     return (
@@ -40,8 +58,6 @@ export default function FilmsScreen() {
 
   return (
     <View style={styles.container}>
-
-      {/* Lazy Loaded Image */}
       <LazyImage
         style={styles.banner}
         resizeMode="contain"
@@ -61,7 +77,6 @@ export default function FilmsScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalText}>You entered:</Text>
             <Text style={styles.modalValue}>{searchText}</Text>
-
             <Button title="Close" onPress={() => setModalVisible(false)} />
           </View>
         </View>
@@ -86,32 +101,27 @@ export default function FilmsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
   banner: { width: "100%", height: 150, marginBottom: 10 },
-
   input: {
     backgroundColor: "#fff",
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
     borderWidth: 1,
     borderColor: "#ccc",
+    marginBottom: 10,
   },
-
   item: {
     marginBottom: 15,
     padding: 10,
     backgroundColor: "#eee",
     borderRadius: 5,
   },
-
   title: { fontSize: 18, fontWeight: "bold" },
-
   modalBackground: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-
   modalBox: {
     width: "80%",
     backgroundColor: "#fff",
@@ -119,7 +129,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-
   modalText: { fontSize: 16, marginBottom: 10 },
   modalValue: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
 });

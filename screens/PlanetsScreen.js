@@ -8,71 +8,77 @@ import {
   TextInput,
   StyleSheet,
 } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
 import SwipeableItem from "./SwipeableItem";
 
 export default function PlanetsScreen() {
   const [planets, setPlanets] = useState([]);
-
-  // Search modal
   const [searchText, setSearchText] = useState("");
   const [searchModalVisible, setSearchModalVisible] = useState(false);
-
-  // Swipe modal
   const [swipeModalVisible, setSwipeModalVisible] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) =>
+      setIsConnected(state.isConnected)
+    );
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     fetch("https://swapi.dev/api/planets/")
       .then((res) => res.json())
       .then((data) => setPlanets(data.results))
-      .catch((err) => console.log(err));
+      .catch(() => {});
   }, []);
+
+  if (!isConnected) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ fontSize: 20, color: "red", textAlign: "center" }}>
+          ⚠ No network connection detected.
+        </Text>
+        <Text style={{ textAlign: "center", marginTop: 10 }}>
+          Please reconnect to the internet to load Star Wars data.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-
-      {/* Search Box */}
       <TextInput
         style={styles.input}
         placeholder="Enter search text..."
         value={searchText}
         onChangeText={setSearchText}
       />
+      <Button title="Submit" onPress={() => setSearchModalVisible(true)} />
 
-      <Button
-        title="Submit"
-        onPress={() => setSearchModalVisible(true)}
-      />
-
-      {/* Search Modal */}
       <Modal visible={searchModalVisible} transparent animationType="slide">
         <View style={styles.modalBox}>
           <View style={styles.modalContent}>
-            <Text style={{ fontSize: 18 }}>You entered:</Text>
-            <Text style={{ fontSize: 22, fontWeight: "bold", marginVertical: 10 }}>
-              {searchText}
-            </Text>
-
+            <Text>You entered:</Text>
+            <Text style={{ fontWeight: "bold", fontSize: 22 }}>{searchText}</Text>
             <Button title="Close" onPress={() => setSearchModalVisible(false)} />
           </View>
         </View>
       </Modal>
 
-      {/* Swipe Modal */}
       <Modal visible={swipeModalVisible} transparent animationType="slide">
         <View style={styles.modalBox}>
           <View style={styles.modalContent}>
-            <Text style={{ fontSize: 22 }}>{selectedText}</Text>
+            <Text style={{ fontSize: 20 }}>{selectedText}</Text>
             <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
           </View>
         </View>
       </Modal>
 
-      {/* Swipe List */}
       <ScrollView style={{ marginTop: 20 }}>
-        {planets.map((p, index) => (
+        {planets.map((p, i) => (
           <SwipeableItem
-            key={index}
+            key={i}
             text={p.name}
             onSwipe={() => {
               setSelectedText(p.name);
@@ -81,14 +87,12 @@ export default function PlanetsScreen() {
           />
         ))}
       </ScrollView>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-
   input: {
     backgroundColor: "#fff",
     padding: 10,
@@ -97,14 +101,12 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     marginBottom: 10,
   },
-
   modalBox: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
-
   modalContent: {
     backgroundColor: "white",
     padding: 30,
@@ -113,4 +115,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-
