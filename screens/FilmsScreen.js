@@ -56,6 +56,12 @@ export default function FilmsScreen() {
       </View>
     );
 
+  // ⭐⭐⭐ ADDED — SEARCH FILTER
+  const filteredFilms = films.filter((film) =>
+    film.title.toLowerCase().includes(searchText.toLowerCase())
+  );
+  // ⭐⭐⭐ END ADDED
+
   return (
     <View style={styles.container}>
       <LazyImage
@@ -82,8 +88,9 @@ export default function FilmsScreen() {
         </View>
       </Modal>
 
+      {/* ⭐⭐⭐ CHANGED TO filteredFilms */}
       <FlatList
-        data={films}
+        data={filteredFilms}
         keyExtractor={(item) => item.title}
         renderItem={({ item }) => (
           <View style={styles.item}>

@@ -12,8 +12,11 @@ import {
 } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import LazyImage from "./LazyImage";
+import { useNavigation } from "@react-navigation/native";
 
 export default function SpaceshipsScreen() {
+  const navigation = useNavigation();
+
   const [ships, setShips] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -82,6 +85,12 @@ export default function SpaceshipsScreen() {
     });
   };
 
+  // ⭐⭐⭐ ADDED — SEARCH FILTER (nothing else touched)
+  const filteredShips = ships.filter((ship) =>
+    ship.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+  // ⭐⭐⭐ END ADDED
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -90,6 +99,7 @@ export default function SpaceshipsScreen() {
         value={searchText}
         onChangeText={setSearchText}
       />
+
       <Button title="Submit" onPress={() => setModalVisible(true)} />
 
       <Modal visible={modalVisible} transparent animationType="slide">
@@ -113,7 +123,8 @@ export default function SpaceshipsScreen() {
       </Modal>
 
       <ScrollView style={{ marginTop: 20 }}>
-        {ships.map((item) => {
+        {/* ⭐⭐⭐ CHANGED TO filteredShips */}
+        {filteredShips.map((item) => {
           const animStyle = {
             opacity: animatedValues[item.name],
             transform: [
@@ -131,6 +142,12 @@ export default function SpaceshipsScreen() {
               <TouchableOpacity
                 onPress={() => handleTap(item.name)}
                 onLongPress={() => removeShip(item.name)}
+                onResponderMove={(e) => {
+                  if (e.nativeEvent.pageX < 50) {
+                    navigation.navigate("SpaceshipDetail", { ship: item });
+                  }
+                }}
+                onStartShouldSetResponder={() => true}
               >
                 <Text style={styles.item}>{item.name}</Text>
 

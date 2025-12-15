@@ -46,6 +46,12 @@ export default function PlanetsScreen() {
     );
   }
 
+  // ⭐⭐⭐ ADDED — SEARCH FILTER
+  const filteredPlanets = planets.filter((planet) =>
+    planet.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+  // ⭐⭐⭐ END ADDED
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -60,8 +66,13 @@ export default function PlanetsScreen() {
         <View style={styles.modalBox}>
           <View style={styles.modalContent}>
             <Text>You entered:</Text>
-            <Text style={{ fontWeight: "bold", fontSize: 22 }}>{searchText}</Text>
-            <Button title="Close" onPress={() => setSearchModalVisible(false)} />
+            <Text style={{ fontWeight: "bold", fontSize: 22 }}>
+              {searchText}
+            </Text>
+            <Button
+              title="Close"
+              onPress={() => setSearchModalVisible(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -70,13 +81,17 @@ export default function PlanetsScreen() {
         <View style={styles.modalBox}>
           <View style={styles.modalContent}>
             <Text style={{ fontSize: 20 }}>{selectedText}</Text>
-            <Button title="Close" onPress={() => setSwipeModalVisible(false)} />
+            <Button
+              title="Close"
+              onPress={() => setSwipeModalVisible(false)}
+            />
           </View>
         </View>
       </Modal>
 
       <ScrollView style={{ marginTop: 20 }}>
-        {planets.map((p, i) => (
+        {/* ⭐⭐⭐ CHANGED TO filteredPlanets */}
+        {filteredPlanets.map((p, i) => (
           <SwipeableItem
             key={i}
             text={p.name}
